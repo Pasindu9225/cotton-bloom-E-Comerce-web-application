@@ -116,7 +116,7 @@ export default function ProductForm({ categories, initialData }: ProductFormProp
 
             <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <label className="text-sm font-medium">Price ($)</label>
+                    <label className="text-sm font-medium">Price Rs.</label>
                     <input
                         name="price"
                         type="number"

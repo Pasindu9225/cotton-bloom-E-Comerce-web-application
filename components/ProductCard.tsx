@@ -40,7 +40,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                     {product.category?.name || "Apparel"}
                 </p>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    ${Number(product.basePrice).toFixed(2)}
+                    Rs{Number(product.basePrice).toFixed(2)}
                 </p>
             </div>
         </Link>
