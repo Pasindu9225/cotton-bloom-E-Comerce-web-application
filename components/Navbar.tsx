@@ -1,60 +1,95 @@
 // components/Navbar.tsx
+"use client";
+
 import Link from "next/link";
-import { Search, ShoppingBag, User } from "lucide-react";
-import { ThemeToggle } from "./ThemeToggle";
+import { ShoppingBag, Search, Menu, X, User } from "lucide-react";
+import { useState } from "react";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { usePathname } from "next/navigation"; // 👈 1. Import this
 
 export default function Navbar() {
+    const [isOpen, setIsOpen] = useState(false);
+    const pathname = usePathname(); // 👈 2. Get current URL
+
+    // 👈 3. Check if we are in Admin Mode
+    const isAdmin = pathname?.startsWith("/admin");
+
     return (
-        <nav className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white dark:bg-gray-900 dark:border-gray-800 transition-colors">
+        <nav className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-950/80">
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
 
-                {/* 1. Logo */}
-                <div className="flex items-center">
-                    <Link href="/" className="text-2xl font-bold tracking-tight text-black dark:text-white">
-                        COTTON BLOOM
+                {/* Logo (Visible to everyone) */}
+                <div className="flex items-center gap-2">
+                    <Link href="/" className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black text-white dark:bg-white dark:text-black">
+                            <span className="font-bold">C</span>
+                        </div>
+                        <span className="text-xl font-bold tracking-tight">COTTON BLOOM</span>
                     </Link>
                 </div>
 
-                {/* 2. Center Links */}
-                <div className="hidden space-x-8 md:flex">
-                    <Link href="/shop" className="text-sm font-medium text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white">
-                        New Arrivals
-                    </Link>
-                    <Link href="/shop?category=men" className="text-sm font-medium text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white">
-                        Men
-                    </Link>
-                    <Link href="/shop?category=women" className="text-sm font-medium text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white">
-                        Women
-                    </Link>
-                </div>
-
-                {/* 3. Right Icons */}
-                <div className="flex items-center gap-4"> {/* Use gap-4 for better spacing */}
-
-                    {/* THEME TOGGLE with Divider */}
-                    <div className="flex items-center border-r border-gray-200 pr-4 dark:border-gray-700">
-                        <ThemeToggle />
+                {/* Desktop Navigation - HIDDEN IF ADMIN */}
+                {!isAdmin && (
+                    <div className="hidden md:flex md:gap-x-8">
+                        <Link href="/new-arrivals" className="text-sm font-medium hover:text-gray-600 dark:hover:text-gray-300">
+                            New Arrivals
+                        </Link>
+                        <Link href="/men" className="text-sm font-medium hover:text-gray-600 dark:hover:text-gray-300">
+                            Men
+                        </Link>
+                        <Link href="/women" className="text-sm font-medium hover:text-gray-600 dark:hover:text-gray-300">
+                            Women
+                        </Link>
                     </div>
+                )}
 
-                    {/* Action Icons */}
-                    <div className="flex items-center gap-2">
-                        <button className="p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white">
-                            <Search className="h-5 w-5" />
+                {/* Right Actions */}
+                <div className="flex items-center gap-4">
+                    <ThemeToggle />
+
+                    {/* Customer Icons - HIDDEN IF ADMIN */}
+                    {!isAdmin && (
+                        <>
+                            <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+                                <Search className="h-5 w-5" />
+                            </button>
+
+                            <Link href="/cart" className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+                                <ShoppingBag className="h-5 w-5" />
+                                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-black text-[10px] font-bold text-white dark:bg-white dark:text-black">
+                                    0
+                                </span>
+                            </Link>
+                        </>
+                    )}
+
+                    {/* User Profile (Visible to everyone, but maybe different for admin) */}
+                    <Link href={isAdmin ? "/admin" : "/profile"} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+                        <User className="h-5 w-5" />
+                    </Link>
+
+                    {/* Mobile Menu Button - HIDDEN IF ADMIN (Admin has sidebar) */}
+                    {!isAdmin && (
+                        <button
+                            onClick={() => setIsOpen(!isOpen)}
+                            className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
+                        >
+                            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                         </button>
-
-                        <Link href="/auth/signin" className="p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white">
-                            <User className="h-5 w-5" />
-                        </Link>
-
-                        <Link href="/cart" className="relative p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white">
-                            <ShoppingBag className="h-5 w-5" />
-                            <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-black text-[10px] font-bold text-white dark:bg-white dark:text-black">
-                                0
-                            </span>
-                        </Link>
-                    </div>
+                    )}
                 </div>
             </div>
+
+            {/* Mobile Menu (Customer Only) */}
+            {isOpen && !isAdmin && (
+                <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 pb-4 pt-2">
+                    <div className="flex flex-col space-y-4">
+                        <Link href="/new-arrivals" className="text-sm font-medium py-2">New Arrivals</Link>
+                        <Link href="/men" className="text-sm font-medium py-2">Men</Link>
+                        <Link href="/women" className="text-sm font-medium py-2">Women</Link>
+                    </div>
+                </div>
+            )}
         </nav>
     );
 }

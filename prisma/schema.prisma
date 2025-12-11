@@ -17,11 +17,10 @@ model User {
   fullName     String    @map("full_name")
   role         String    @default("customer") // 'customer' or 'admin'
   
-  // Relationships
   addresses    Address[]
   orders       Order[]
 
-  @@map("users") // This tells Prisma the table name in the DB is "users"
+  @@map("users")
 }
 
 // 2. ADDRESSES TABLE
@@ -34,7 +33,6 @@ model Address {
   postalCode    String @map("postal_code")
   country       String
 
-  // Relationships
   user          User   @relation(fields: [userId], references: [id])
 
   @@map("addresses")
@@ -46,7 +44,6 @@ model Category {
   name             String
   parentCategoryId Int?   @map("parent_category_id")
 
-  // Relationships
   parent           Category?  @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id])
   children         Category[] @relation("CategoryHierarchy")
   products         Product[]
@@ -56,14 +53,14 @@ model Category {
 
 // 4. PRODUCTS TABLE
 model Product {
-  id          Int     @id @default(autoincrement()) @map("product_id")
-  categoryId  Int     @map("category_id")
+  id          Int      @id @default(autoincrement()) @map("product_id")
+  categoryId  Int      @map("category_id")
   name        String
   description String
-  basePrice   Decimal @map("base_price")
-  imageUrl    String  @map("image_url")
+  basePrice   Decimal  @map("base_price")
 
-  // Relationships
+  images      String[] @map("images") 
+
   category    Category         @relation(fields: [categoryId], references: [id])
   variants    ProductVariant[]
 

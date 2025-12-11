@@ -58,7 +58,10 @@ async function main() {
                 name: "Classic Cotton Tee",
                 description: "Premium cotton t-shirt.",
                 basePrice: 25.00,          // Matches 'basePrice'
-                imageUrl: "/placeholder.jpg", // Matches 'imageUrl'
+
+                // 👇 FIXED: Now sending an array of strings
+                images: ["/placeholder.jpg"],
+
                 categoryId: menCat.id,     // Uses Integer ID
                 variants: {
                     create: [
@@ -75,7 +78,10 @@ async function main() {
                 name: "Slim Fit Jeans",
                 description: "Comfort stretch denim.",
                 basePrice: 60.00,
-                imageUrl: "/placeholder.jpg",
+
+                // 👇 FIXED: Now sending an array of strings
+                images: ["/placeholder.jpg"],
+
                 categoryId: womenCat.id,
                 variants: {
                     create: [

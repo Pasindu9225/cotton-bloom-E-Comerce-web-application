@@ -4,46 +4,67 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-interface DownloadReportButtonProps {
-    data: {
-        totalSales: number;
-        totalOrders: number;
-        totalCustomers: number;
-    };
+interface ReportData {
+    stats: { totalSales: number; totalOrders: number; totalCustomers: number };
+    revenueData: { date: string; total: number }[];
+    statusData: { name: string; value: number }[];
+    topProducts: { name: string; sales: number }[];
 }
 
-export default function DownloadReportButton({ data }: DownloadReportButtonProps) {
+export default function DownloadReportButton({ data }: { data: ReportData }) {
 
     const generatePDF = () => {
-        // 1. Create a new PDF document
         const doc = new jsPDF();
 
-        // 2. Add Title
+        // 1. Header
         doc.setFontSize(20);
-        doc.text("Cotton Bloom - Admin Report", 14, 22);
-
-        // 3. Add Timestamp
+        doc.text("Cotton Bloom - Executive Report", 14, 22);
         doc.setFontSize(11);
-        doc.setTextColor(100);
-        const date = new Date().toLocaleString();
-        doc.text(`Generated on: ${date}`, 14, 30);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
 
-        // 4. Create the Data Table
+        // 2. Summary Table
         autoTable(doc, {
             startY: 40,
-            head: [['Metric', 'Value']],
+            head: [['Key Metric', 'Value']],
             body: [
-                ['Total Sales', `$${data.totalSales.toFixed(2)}`],
-                ['Total Orders', data.totalOrders.toString()],
-                ['Total Customers', data.totalCustomers.toString()],
-                ['Conversion Rate', '3.4% (Calculated)'], // Example static data
+                ['Total Revenue', `$${data.stats.totalSales.toFixed(2)}`],
+                ['Total Orders', data.stats.totalOrders.toString()],
+                ['Total Customers', data.stats.totalCustomers.toString()],
             ],
-            styles: { fontSize: 12 },
-            headStyles: { fillColor: [0, 0, 0] }, // Black header
+            theme: 'grid',
+            headStyles: { fillColor: [0, 0, 0] },
         });
 
-        // 5. Save the file
-        doc.save(`cotton-bloom-report-${Date.now()}.pdf`);
+        // 3. Top Products Table (Represents the Top 5 Chart)
+        doc.text("Top Selling Products", 14, (doc as any).lastAutoTable.finalY + 10);
+
+        autoTable(doc, {
+            startY: (doc as any).lastAutoTable.finalY + 15,
+            head: [['Product Name', 'Units Sold']],
+            body: data.topProducts.map(p => [p.name, p.sales.toString()]),
+            theme: 'striped',
+        });
+
+        // 4. Order Status Breakdown (Represents the Pie Chart)
+        doc.text("Order Status Breakdown", 14, (doc as any).lastAutoTable.finalY + 10);
+
+        autoTable(doc, {
+            startY: (doc as any).lastAutoTable.finalY + 15,
+            head: [['Status', 'Count']],
+            body: data.statusData.map(s => [s.name, s.value.toString()]),
+            theme: 'striped',
+        });
+
+        // 5. Recent Revenue (Represents the Bar Chart)
+        doc.text("Recent Revenue Trends", 14, (doc as any).lastAutoTable.finalY + 10);
+
+        autoTable(doc, {
+            startY: (doc as any).lastAutoTable.finalY + 15,
+            head: [['Date', 'Revenue']],
+            body: data.revenueData.map(r => [r.date, `$${r.total.toFixed(2)}`]),
+        });
+
+        doc.save(`cotton-bloom-full-report-${Date.now()}.pdf`);
     };
 
     return (

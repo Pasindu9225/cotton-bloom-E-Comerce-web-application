@@ -1,39 +1,51 @@
 // app/admin/customers/page.tsx
 import { prisma } from "@/lib/prisma";
-import { Mail, Search, User as UserIcon } from "lucide-react";
+import { Mail, User as UserIcon } from "lucide-react";
+import Link from "next/link";
+import Search from "@/components/Search"; // Import Search Component
 
-async function getCustomers() {
+// Update: Filter by name OR email
+async function getCustomers(query: string) {
     const customers = await prisma.user.findMany({
-        where: { role: "customer" },
+        where: {
+            role: "customer",
+            OR: [
+                { fullName: { contains: query, mode: "insensitive" } },
+                { email: { contains: query, mode: "insensitive" } },
+            ]
+        },
         include: {
             orders: true,
         },
-        // FIX 1: Sort by ID instead of 'createdAt' (which doesn't exist in your User table)
-        orderBy: { id: 'desc' },
+        orderBy: { id: 'desc' }, // Updated from createdAt to id based on your schema
     });
 
     return customers;
 }
 
-export default async function AdminCustomersPage() {
-    const customers = await getCustomers();
+export default async function AdminCustomersPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ q?: string }>;
+}) {
+    const params = await searchParams;
+    const query = params?.q || "";
+
+    const customers = await getCustomers(query);
 
     return (
         <div className="space-y-6 max-w-[1400px]">
+
+            {/* Header & Search */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h1 className="text-3xl font-bold tracking-tight text-black dark:text-white">
                     Customers
                 </h1>
-                <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                    <input
-                        type="text"
-                        placeholder="Search customers..."
-                        className="h-10 w-full sm:w-[300px] rounded-md border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-black dark:border-gray-800 dark:bg-gray-900 dark:focus:border-white"
-                    />
-                </div>
+                {/* Enable Search */}
+                <Search placeholder="Search name or email..." />
             </div>
 
+            {/* Customers Table */}
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
@@ -50,17 +62,14 @@ export default async function AdminCustomersPage() {
                             {customers.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                                        No customers found yet.
+                                        No customers found.
                                     </td>
                                 </tr>
                             ) : (
                                 customers.map((customer) => {
 
-                                    // FIX 2: Explicit typing and using 'totalAmount'
-                                    const totalSpent = customer.orders.reduce((sum: number, order: any) => {
-                                        // Your schema uses 'totalAmount', so we look for that
-                                        const val = order.totalAmount || 0;
-                                        return sum + Number(val);
+                                    const totalSpent = customer.orders.reduce((sum, order) => {
+                                        return sum + Number(order.totalAmount);
                                     }, 0);
 
                                     return (
@@ -70,7 +79,6 @@ export default async function AdminCustomersPage() {
                                                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500">
                                                         <UserIcon className="h-5 w-5" />
                                                     </div>
-                                                    {/* FIX 3: Use 'fullName' because 'name' does not exist in your User schema */}
                                                     <span className="font-medium text-gray-900 dark:text-white">
                                                         {customer.fullName || "Guest User"}
                                                     </span>
@@ -89,9 +97,13 @@ export default async function AdminCustomersPage() {
                                                 ${totalSpent.toFixed(2)}
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button className="text-sm font-medium text-black hover:underline dark:text-white">
+                                                {/* 3. Working View Button */}
+                                                <Link
+                                                    href={`/admin/customers/${customer.id}`}
+                                                    className="text-sm font-medium text-black hover:underline dark:text-white"
+                                                >
                                                     View
-                                                </button>
+                                                </Link>
                                             </td>
                                         </tr>
                                     );

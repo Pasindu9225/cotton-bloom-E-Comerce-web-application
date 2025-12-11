@@ -1,15 +1,17 @@
+// app/admin/products/page.tsx
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import Search from "@/components/Search"; // Make sure you created components/Search.tsx
+import Search from "@/components/Search";
+import Image from "next/image";
+import { deleteProduct } from "@/app/actions/product"; // Import the delete action
 
-// 1. Fetch products filtered by the search query
 async function getProducts(query: string) {
     const products = await prisma.product.findMany({
         where: {
             name: {
                 contains: query,
-                mode: "insensitive", // Case-insensitive search
+                mode: "insensitive",
             },
         },
         include: {
@@ -25,9 +27,8 @@ async function getProducts(query: string) {
 export default async function AdminProductsPage({
     searchParams,
 }: {
-    searchParams: Promise<{ q?: string }>; // FIX: Define as Promise for Next.js 15
+    searchParams: Promise<{ q?: string }>;
 }) {
-    // FIX: Await the searchParams before using them
     const params = await searchParams;
     const query = params?.q || "";
 
@@ -36,15 +37,12 @@ export default async function AdminProductsPage({
     return (
         <div className="space-y-6 max-w-[1400px]">
 
-            {/* 1. Header & Actions */}
+            {/* Header & Actions */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h1 className="text-3xl font-bold tracking-tight text-black dark:text-white">
                     Products
                 </h1>
                 <div className="flex gap-2">
-
-                    {/* 2. Search Bar Component */}
-                    {/* This handles the URL updates automatically */}
                     <Search placeholder="Search products..." />
 
                     <Link
@@ -57,7 +55,7 @@ export default async function AdminProductsPage({
                 </div>
             </div>
 
-            {/* 3. Products Table */}
+            {/* Products Table */}
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
@@ -80,18 +78,28 @@ export default async function AdminProductsPage({
                                 </tr>
                             ) : (
                                 products.map((product) => {
-                                    // Calculate Total Stock
                                     const totalStock = product.variants.reduce((acc, v) => acc + v.stockQuantity, 0);
                                     const isOutOfStock = totalStock === 0;
+
+                                    // Get the first image or use a fallback
+                                    const firstImage = product.images[0] || "/placeholder.jpg";
 
                                     return (
                                         <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="h-10 w-10 rounded-md bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs text-gray-400">
-                                                        {/* Placeholder for image */}
-                                                        IMG
+
+                                                    {/* Image Box */}
+                                                    <div className="relative h-10 w-10 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                                                        <Image
+                                                            src={firstImage}
+                                                            alt={product.name}
+                                                            fill
+                                                            className="object-cover"
+                                                            unoptimized // Keeps it fast in admin panel
+                                                        />
                                                     </div>
+
                                                     <span className="font-medium text-gray-900 dark:text-white">
                                                         {product.name}
                                                     </span>
@@ -109,21 +117,35 @@ export default async function AdminProductsPage({
                                             <td className="px-6 py-4">
                                                 <span
                                                     className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${isOutOfStock
-                                                            ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                                                            : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                                        ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                                                        : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                                                         }`}
                                                 >
                                                     {isOutOfStock ? "Out of Stock" : "Active"}
                                                 </span>
                                             </td>
+
+                                            {/* 👇 UPDATED ACTIONS COLUMN */}
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    <button className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-black dark:hover:bg-gray-800 dark:hover:text-white">
+
+                                                    {/* Edit Button (Links to Edit Page) */}
+                                                    <Link
+                                                        href={`/admin/products/${product.id}/edit`}
+                                                        className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-black dark:hover:bg-gray-800 dark:hover:text-white transition-colors"
+                                                    >
                                                         <Pencil className="h-4 w-4" />
-                                                    </button>
-                                                    <button className="rounded-md p-2 text-gray-500 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
+                                                    </Link>
+
+                                                    {/* Delete Button (Server Action) */}
+                                                    <form action={deleteProduct.bind(null, product.id)}>
+                                                        <button
+                                                            type="submit"
+                                                            className="rounded-md p-2 text-gray-500 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </td>
                                         </tr>

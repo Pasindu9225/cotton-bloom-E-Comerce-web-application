@@ -1,47 +1,79 @@
 // app/admin/orders/page.tsx
 import { prisma } from "@/lib/prisma";
-import { Eye, Search, Filter } from "lucide-react";
+import { Eye } from "lucide-react";
+import Search from "@/components/Search"; // Use existing component
+import OrderStatusFilter from "@/components/OrderStatusFilter"; // Use new component
+import Link from "next/link";
 
-async function getOrders() {
+// Helper function to build the prisma query
+async function getOrders(query: string, statusFilter?: string) {
+    // Logic: If query is a number, search ID. If string, search Customer Name.
+    const isNumber = !isNaN(parseInt(query)) && query !== "";
+
+    const whereCondition: any = {
+        AND: [],
+    };
+
+    if (query) {
+        if (isNumber) {
+            whereCondition.AND.push({ id: parseInt(query) });
+        } else {
+            whereCondition.AND.push({
+                user: {
+                    fullName: {
+                        contains: query,
+                        mode: "insensitive",
+                    },
+                },
+            });
+        }
+    }
+
+    if (statusFilter && statusFilter !== "ALL") {
+        whereCondition.AND.push({ status: statusFilter });
+    }
+
     const orders = await prisma.order.findMany({
+        where: whereCondition,
         include: {
-            user: true, // Get Customer Name
-            items: true, // Get item count
+            user: true,
+            items: true,
         },
-        orderBy: { createdAt: 'desc' }, // Newest orders first
+        orderBy: { createdAt: 'desc' },
     });
 
     return orders;
 }
 
-export default async function AdminOrdersPage() {
-    const orders = await getOrders();
+export default async function AdminOrdersPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ q?: string; status?: string }>;
+}) {
+    const params = await searchParams;
+    const query = params.q || "";
+    const status = params.status || "";
+
+    const orders = await getOrders(query, status);
 
     return (
         <div className="space-y-6 max-w-[1400px]">
 
-            {/* 1. Header & Filters */}
+            {/* Header & Controls */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h1 className="text-3xl font-bold tracking-tight text-black dark:text-white">
                     Orders
                 </h1>
-                <div className="flex gap-2">
-                    <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <input
-                            type="text"
-                            placeholder="Search by Order ID..."
-                            className="h-10 rounded-md border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-black dark:border-gray-800 dark:bg-gray-900 dark:focus:border-white"
-                        />
-                    </div>
-                    <button className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800">
-                        <Filter className="h-4 w-4" />
-                        Filter
-                    </button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    {/* 1. Search Bar */}
+                    <Search placeholder="Search by ID or Customer..." />
+
+                    {/* 2. Filter Dropdown */}
+                    <OrderStatusFilter />
                 </div>
             </div>
 
-            {/* 2. Orders Table */}
+            {/* Orders Table */}
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
@@ -88,9 +120,13 @@ export default async function AdminOrdersPage() {
                                             ${Number(order.totalAmount).toFixed(2)}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-black dark:hover:bg-gray-800 dark:hover:text-white">
+                                            {/* 3. Link to Order Details */}
+                                            <Link
+                                                href={`/admin/orders/${order.id}`}
+                                                className="inline-flex rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-black dark:hover:bg-gray-800 dark:hover:text-white transition-colors"
+                                            >
                                                 <Eye className="h-4 w-4" />
-                                            </button>
+                                            </Link>
                                         </td>
                                     </tr>
                                 ))
@@ -103,7 +139,6 @@ export default async function AdminOrdersPage() {
     );
 }
 
-// Helper Component for Colored Status Pills
 function StatusBadge({ status }: { status: string }) {
     const styles: Record<string, string> = {
         PENDING: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
@@ -112,11 +147,10 @@ function StatusBadge({ status }: { status: string }) {
         CANCELLED: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
     };
 
-    // Default to gray if status doesn't match
     const className = styles[status] || "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
 
     return (
-        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${className}`}>
+        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${className}`}>
             {status}
         </span>
     );
