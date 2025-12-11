@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut } from "lucide-react";
 
 const menuItems = [
@@ -48,7 +49,9 @@ export default function AdminSidebar() {
                     <Settings className="h-5 w-5" />
                     <span className="text-sm font-medium">Settings</span>
                 </Link>
-                <button className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-red-400 hover:bg-gray-800 hover:text-red-300 transition-colors">
+                <button
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-red-400 hover:bg-gray-800 hover:text-red-300 transition-colors">
                     <LogOut className="h-5 w-5" />
                     <span className="text-sm font-medium">Logout</span>
                 </button>

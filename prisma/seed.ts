@@ -1,13 +1,40 @@
 // prisma/seed.ts
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs"; // 👈 Ensure you have this installed
 
 const prisma = new PrismaClient();
 
 async function main() {
     console.log("🌱 Starting seed...");
 
-    // 1. Create Categories
-    // Since 'name' isn't unique in your schema, we check manually before creating
+    // ==========================================
+    // 1. CREATE SUPER ADMIN
+    // ==========================================
+    const adminEmail = "admin@cottonbloom.com";
+    const adminPassword = "admin123";
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+    const admin = await prisma.user.upsert({
+        where: { email: adminEmail },
+        update: {
+            role: "admin", // Ensure they stay admin if they already exist
+            passwordHash: hashedPassword,
+        },
+        create: {
+            email: adminEmail,
+            fullName: "Super Admin",
+            passwordHash: hashedPassword,
+            role: "admin", // 👈 This grants access to the dashboard
+        },
+    });
+
+    console.log(`👮 Admin created: ${adminEmail} (Password: ${adminPassword})`);
+
+    // ==========================================
+    // 2. CREATE CATEGORIES
+    // ==========================================
     const categoryNames = ["Men", "Women", "Kids", "Accessories"];
 
     for (const name of categoryNames) {
@@ -17,19 +44,19 @@ async function main() {
         }
     }
 
-    // Fetch categories to get their Integer IDs
     const menCat = await prisma.category.findFirst({ where: { name: "Men" } });
     const womenCat = await prisma.category.findFirst({ where: { name: "Women" } });
 
-    // 2. Create Users
-    // 'email' IS unique, so we can use upsert safely
+    // ==========================================
+    // 3. CREATE STANDARD USERS
+    // ==========================================
     const user1 = await prisma.user.upsert({
         where: { email: "alice@example.com" },
         update: {},
         create: {
             email: "alice@example.com",
-            passwordHash: "hashed_password_123", // Matches 'passwordHash'
-            fullName: "Alice Johnson",           // Matches 'fullName'
+            passwordHash: await bcrypt.hash("password123", 10),
+            fullName: "Alice Johnson",
             role: "customer",
         },
     });
@@ -39,16 +66,17 @@ async function main() {
         update: {},
         create: {
             email: "bob@example.com",
-            passwordHash: "hashed_password_456",
+            passwordHash: await bcrypt.hash("password123", 10),
             fullName: "Bob Smith",
             role: "customer",
         },
     });
 
-    console.log("✅ Users created");
+    console.log("✅ Standard users created");
 
-    // 3. Create Products
-    // We check if any products exist to avoid duplicates
+    // ==========================================
+    // 4. CREATE PRODUCTS
+    // ==========================================
     const existingProducts = await prisma.product.findMany();
 
     if (existingProducts.length === 0 && menCat && womenCat) {
@@ -57,15 +85,12 @@ async function main() {
             data: {
                 name: "Classic Cotton Tee",
                 description: "Premium cotton t-shirt.",
-                basePrice: 25.00,          // Matches 'basePrice'
-
-                // 👇 FIXED: Now sending an array of strings
-                images: ["/placeholder.jpg"],
-
-                categoryId: menCat.id,     // Uses Integer ID
+                basePrice: 25.00,
+                images: ["/placeholder.jpg"], // 👈 Uses the array format
+                categoryId: menCat.id,
                 variants: {
                     create: [
-                        { size: "M", color: "Black", stockQuantity: 10 }, // Matches 'stockQuantity'
+                        { size: "M", color: "Black", stockQuantity: 10 },
                         { size: "L", color: "White", stockQuantity: 5 }
                     ]
                 }
@@ -78,10 +103,7 @@ async function main() {
                 name: "Slim Fit Jeans",
                 description: "Comfort stretch denim.",
                 basePrice: 60.00,
-
-                // 👇 FIXED: Now sending an array of strings
                 images: ["/placeholder.jpg"],
-
                 categoryId: womenCat.id,
                 variants: {
                     create: [
@@ -93,8 +115,9 @@ async function main() {
 
         console.log("✅ Products created");
 
-        // 4. Create Orders
-        // We need to fetch the variants we just created to link them
+        // ==========================================
+        // 5. CREATE ORDERS (History)
+        // ==========================================
         const tshirtVariant = await prisma.productVariant.findFirst({ where: { productId: tshirt.id } });
         const jeansVariant = await prisma.productVariant.findFirst({ where: { productId: jeans.id } });
 
@@ -102,7 +125,7 @@ async function main() {
             await prisma.order.create({
                 data: {
                     userId: user1.id,
-                    totalAmount: 50.00, // Matches 'totalAmount'
+                    totalAmount: 50.00,
                     status: "DELIVERED",
                     items: {
                         create: [
@@ -135,7 +158,7 @@ async function main() {
             console.log("✅ Orders created");
         }
     } else {
-        console.log("ℹ️ Products already exist or categories missing, skipping.");
+        console.log("ℹ️ Products already exist, skipping product creation.");
     }
 
     console.log("🌱 Seeding finished.");

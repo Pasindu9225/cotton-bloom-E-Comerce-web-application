@@ -60,6 +60,7 @@ model Product {
   basePrice   Decimal  @map("base_price")
 
   images      String[] @map("images") 
+  createdAt   DateTime @default(now()) @map("created_at")
 
   category    Category         @relation(fields: [categoryId], references: [id])
   variants    ProductVariant[]

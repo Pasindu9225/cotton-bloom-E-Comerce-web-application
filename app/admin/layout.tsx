@@ -1,5 +1,6 @@
 // app/admin/layout.tsx
 import AdminSidebar from "@/components/AdminSidebar";
+import AdminSessionGuard from "@/components/AdminSessionGuard"; // 👈 Import the guard
 
 export default function AdminLayout({
     children,
@@ -12,11 +13,11 @@ export default function AdminLayout({
             <div className="w-64 flex-shrink-0 hidden md:block">
                 <AdminSidebar />
             </div>
-
-            {/* Main Content Area */}
-            <main className="flex-1 p-8 lg:p-12 overflow-y-auto text-gray-900 dark:text-gray-100">
-                {children}
-            </main>
+            <AdminSessionGuard>
+                <main className="flex-1 p-8 lg:p-12 overflow-y-auto text-gray-900 dark:text-gray-100">
+                    {children}
+                </main>
+            </AdminSessionGuard>
         </div>
     );
 }
