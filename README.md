@@ -80,3 +80,15 @@ cotton-bloom/
 ├── lib/                    # Utilities (Prisma Client, Formatters)
 ├── prisma/                 # DB Schema & Seed Scripts
 └── public/                 # Static Assets
+
+## ⚡ Installation & Setup
+
+Follow these steps to run the project locally.
+
+### 1. Clone the Repository
+```bash
+git clone [https://github.com/Pasindu9225/cotton-bloom.git](https://github.com/Pasindu9225/cotton-bloom.git)
+cd cotton-bloom
+
+
+
