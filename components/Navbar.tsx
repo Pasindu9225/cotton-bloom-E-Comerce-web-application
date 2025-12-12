@@ -3,22 +3,30 @@
 
 import Link from "next/link";
 import { ShoppingBag, Search, Menu, X, User } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { usePathname } from "next/navigation"; // 👈 1. Import this
+import { usePathname } from "next/navigation";
+import { useCart } from "../app/context/CartContext"; // 👈 1. Import the Hook
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
-    const pathname = usePathname(); // 👈 2. Get current URL
+    const pathname = usePathname();
 
-    // 👈 3. Check if we are in Admin Mode
+    // 👈 2. Get the real count from the Cart Brain
+    const { cartCount } = useCart();
+
+    // Fix Hydration Mismatch: Wait for client load before showing count
+    // (Prevents the server saying "0" and client saying "1" error)
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
     const isAdmin = pathname?.startsWith("/admin");
 
     return (
         <nav className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-950/80">
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
 
-                {/* Logo (Visible to everyone) */}
+                {/* Logo */}
                 <div className="flex items-center gap-2">
                     <Link href="/" className="flex items-center gap-2">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black text-white dark:bg-white dark:text-black">
@@ -47,7 +55,6 @@ export default function Navbar() {
                 <div className="flex items-center gap-4">
                     <ThemeToggle />
 
-                    {/* Customer Icons - HIDDEN IF ADMIN */}
                     {!isAdmin && (
                         <>
                             <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
@@ -56,19 +63,20 @@ export default function Navbar() {
 
                             <Link href="/cart" className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
                                 <ShoppingBag className="h-5 w-5" />
-                                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-black text-[10px] font-bold text-white dark:bg-white dark:text-black">
-                                    0
-                                </span>
+                                {/* 👈 3. Display the Real Count (only if > 0) */}
+                                {mounted && cartCount > 0 && (
+                                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-black text-[10px] font-bold text-white dark:bg-white dark:text-black animate-in zoom-in">
+                                        {cartCount}
+                                    </span>
+                                )}
                             </Link>
                         </>
                     )}
 
-                    {/* User Profile (Visible to everyone, but maybe different for admin) */}
                     <Link href={isAdmin ? "/admin" : "/profile"} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
                         <User className="h-5 w-5" />
                     </Link>
 
-                    {/* Mobile Menu Button - HIDDEN IF ADMIN (Admin has sidebar) */}
                     {!isAdmin && (
                         <button
                             onClick={() => setIsOpen(!isOpen)}
@@ -80,7 +88,6 @@ export default function Navbar() {
                 </div>
             </div>
 
-            {/* Mobile Menu (Customer Only) */}
             {isOpen && !isAdmin && (
                 <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 pb-4 pt-2">
                     <div className="flex flex-col space-y-4">
