@@ -4,6 +4,7 @@ import ProductCard from "@/components/ProductCard";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
+export const dynamic = "force-dynamic";
 // Fetch the 4 newest products
 async function getNewArrivals() {
   return await prisma.product.findMany({
