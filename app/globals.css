@@ -10,7 +10,6 @@
 }
 
 /* 3. Define Dark Mode Variables (When .dark class is present) */
-/* This was missing! Previously it only checked your system settings. */
 .dark {
   --background: #0a0a0a;
   --foreground: #ededed;
@@ -28,4 +27,20 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* =========================================
+   CAROUSEL FIX (Add this to make slider visible)
+   ========================================= */
+.carousel-root,
+.carousel,
+.carousel .slider-wrapper,
+.carousel .slider,
+.carousel .slide {
+  height: 100%;
+}
+
+/* Ensure the div wrapping the image inside the slide takes full height */
+.carousel .slide>div {
+  height: 100%;
 }
