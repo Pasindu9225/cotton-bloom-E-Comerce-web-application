@@ -5,29 +5,40 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export async function placeOrder(cartItems: any[], addressData: any) {
+// 👇 Define the shapes of your data
+interface CartItem {
+    variantId: number;
+    quantity: number;
+    price: number;
+}
+
+interface AddressData {
+    address: string;
+    city: string;
+    postalCode: string;
+    country: string;
+}
+
+// 👇 Apply types here instead of 'any'
+export async function placeOrder(cartItems: CartItem[], addressData: AddressData) {
     const session = await getServerSession(authOptions);
     const user = session?.user;
 
-    // 1. Debugging: Check what the session actually has
-    console.log("Checkout Session:", user);
-
-    // 2. Strict Check: Ensure we have both a User AND an ID
+    // 1. ROBUST CHECK: Ensure we have a User AND an ID
     if (!user || !user.email || !user.id) {
-        console.error("Session missing User ID. User must relogin.");
+        console.error("Checkout Blocked: Missing User ID in session.");
         return { success: false, error: "Session expired. Please log out and log in again." };
     }
 
-    // Safely convert ID to number
-    const userId = parseInt(user.id.toString());
+    const userId = Number(user.id);
+
     if (isNaN(userId)) {
-        return { success: false, error: "Invalid User ID." };
+        return { success: false, error: "Invalid User ID. Please relogin." };
     }
 
     try {
         let totalAmount = 0;
 
-        // Verify stock and calculate total
         for (const item of cartItems) {
             const variant = await prisma.productVariant.findUnique({
                 where: { id: item.variantId },
@@ -44,10 +55,9 @@ export async function placeOrder(cartItems: any[], addressData: any) {
 
         const order = await prisma.$transaction(async (tx) => {
 
-            // 1. Create Address
             await tx.address.create({
                 data: {
-                    userId: userId, // 👈 Use the safe variable
+                    userId: userId,
                     label: "Shipping",
                     streetAddress: addressData.address,
                     city: addressData.city,
@@ -56,14 +66,13 @@ export async function placeOrder(cartItems: any[], addressData: any) {
                 }
             });
 
-            // 2. Create Order
             const newOrder = await tx.order.create({
                 data: {
-                    userId: userId, // 👈 Use the safe variable
+                    userId: userId,
                     totalAmount: totalAmount,
                     status: "PENDING",
                     items: {
-                        create: cartItems.map((item: any) => ({
+                        create: cartItems.map((item) => ({
                             variantId: item.variantId,
                             quantity: item.quantity,
                             priceAtPurchase: item.price
@@ -72,7 +81,6 @@ export async function placeOrder(cartItems: any[], addressData: any) {
                 }
             });
 
-            // 3. Update Stock
             for (const item of cartItems) {
                 await tx.productVariant.update({
                     where: { id: item.variantId },

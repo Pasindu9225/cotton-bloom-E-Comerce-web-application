@@ -1,4 +1,3 @@
-// app/api/auth/[...nextauth]/route.ts
 import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
@@ -29,7 +28,7 @@ export const authOptions: AuthOptions = {
                 if (!isValid) throw new Error("Invalid password");
 
                 return {
-                    id: user.id.toString(), // 1. We pass ID here
+                    id: user.id.toString(),
                     name: user.fullName,
                     email: user.email,
                     role: user.role,
@@ -38,17 +37,19 @@ export const authOptions: AuthOptions = {
         }),
     ],
     callbacks: {
-        async jwt({ token, user }: any) {
+        // 👇 FIXED: Added explicit types to prevent TypeScript errors
+        async jwt({ token, user }: { token: any; user: any }) {
             if (user) {
                 token.role = user.role;
-                token.id = user.id; // 2. We MUST save ID to the token
+                token.id = user.id;
             }
             return token;
         },
-        async session({ session, token }: any) {
+        // 👇 FIXED: Added explicit types here as well
+        async session({ session, token }: { session: any; token: any }) {
             if (session.user) {
                 session.user.role = token.role;
-                session.user.id = token.id; // 3. We MUST pass ID to the session
+                session.user.id = token.id;
             }
             return session;
         },
