@@ -4,6 +4,7 @@ import { ArrowLeft, Mail, MapPin, Package } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import OrderStatusControls from "@/components/OrderStatusControls"; // 👈 IMPORT THIS
 
 interface OrderDetailsPageProps {
     params: Promise<{ id: string }>;
@@ -20,7 +21,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
         where: { id: orderId },
         include: {
             user: {
-                include: { addresses: true }, // Get address if available
+                include: { addresses: true },
             },
             items: {
                 include: {
@@ -53,17 +54,19 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                         Placed on {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString()}
                     </p>
                 </div>
+
+                {/* 👇 REPLACED STATIC BADGE WITH INTERACTIVE CONTROLS */}
                 <div className="ml-auto">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${order.status === "DELIVERED" ? "bg-green-100 text-green-800" :
-                            order.status === "PENDING" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"
-                        }`}>
-                        {order.status}
-                    </span>
+                    <OrderStatusControls
+                        orderId={order.id}
+                        currentStatus={order.status}
+                    />
                 </div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
-                {/* Customer Details */}
+
+                {/* Left Column: Order Items */}
                 <div className="md:col-span-2 space-y-6">
                     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
                         <h3 className="font-semibold mb-4 flex items-center gap-2">
@@ -73,7 +76,6 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                             {order.items.map((item) => (
                                 <div key={item.id} className="py-4 flex items-center gap-4">
                                     <div className="h-16 w-16 relative bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
-                                        {/* Use the first image from the product array */}
                                         <Image
                                             src={item.variant.product.images[0] || "/placeholder.jpg"}
                                             alt={item.variant.product.name}
@@ -102,8 +104,10 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                     </div>
                 </div>
 
-                {/* Sidebar: Customer Info */}
+                {/* Right Column: Customer & Address */}
                 <div className="space-y-6">
+
+                    {/* Customer Card */}
                     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
                         <h3 className="font-semibold mb-4 text-sm text-gray-500 uppercase tracking-wider">Customer</h3>
                         <div className="flex items-center gap-3 mb-4">
@@ -121,6 +125,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                         </div>
                     </div>
 
+                    {/* Address Card */}
                     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
                         <h3 className="font-semibold mb-4 text-sm text-gray-500 uppercase tracking-wider">Shipping Address</h3>
                         <div className="flex gap-2 text-sm text-gray-600 dark:text-gray-300">
@@ -136,6 +141,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                             )}
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
