@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cotton Bloom - Full Stack E-Commerce Application
 
-## Getting Started
+![Next.js](https://img.shields.io/badge/Next.js-16-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue) ![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-cyan) ![Prisma](https://img.shields.io/badge/Prisma-ORM-green)
 
-First, run the development server:
+**Live Demo:** [https://cotton-bloom.vercel.app/](https://cotton-bloom.vercel.app/)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 📖 Project Overview
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Cotton Bloom** is a high-performance, full-stack e-commerce platform designed for selling premium apparel. It features a modern, dual-interface system:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1.  **Customer Storefront:** A responsive shopping experience with product browsing, a shopping cart, and secure checkout.
+2.  **Admin Dashboard:** A secured control panel for managing products, tracking order statuses (Pending → Shipped → Delivered), and viewing analytics.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Built with performance and scalability in mind using **Next.js 16**, **TypeScript**, and **PostgreSQL**.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🚀 Key Features
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 🛍️ Storefront
+* **Dynamic Hero Slider:** Custom-built, high-performance image carousel.
+* **Product Catalog:** Filterable product grids with dynamic category pages (Men/Women).
+* **Shopping Cart:** Persistent cart state using Local Storage.
+* **Checkout System:** Transactional order placement with stock validation.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 🛡️ Admin Dashboard
+* **Product Management:** Create new products with image uploads (via Cloudinary).
+* **Order Management:** View order details and update statuses (Pending / Shipped / Delivered).
+* **Analytics:** Visual data representation using Recharts.
+* **Security:** Role-based access control (RBAC) protecting admin routes.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛠️ Technology Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Core
+* **Framework:** [Next.js 16 (App Router)](https://nextjs.org/)
+* **Language:** [TypeScript](https://www.typescriptlang.org/)
+* **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
+* **Build Tool:** Turbopack
+
+### Database & Backend
+* **Database:** PostgreSQL (Hosted on Neon)
+* **ORM:** [Prisma](https://www.prisma.io/)
+* **Authentication:** [NextAuth.js v4](https://next-auth.js.org/)
+* **Image Storage:** [Cloudinary](https://cloudinary.com/) (Unsigned Uploads)
+
+### Libraries & Tools
+* **UI Components:** Lucide React (Icons), Framer Motion (Animations)
+* **Data Visualization:** Recharts
+* **PDF Generation:** jsPDF & jsPDF-AutoTable
+* **Validation:** Zod (via server actions)
+
+---
+
+## 🗄️ Database Schema
+
+The database is managed via Prisma ORM. Key models include:
+
+* **User:** Authentication & Roles (`customer` vs `admin`).
+* **Address:** Shipping information linked to users.
+* **Product & Category:** Hierarchical categorization and product details.
+* **ProductVariant:** Inventory management for specific sizes/colors.
+* **Order & OrderItem:** Transactional data linking users to purchased variants.
+
+---
+
+## 📂 Project Structure
+
+```text
+cotton-bloom/
+├── .github/                # CI/CD Pipelines
+├── app/
+│   ├── actions/            # Server Actions (Backend Logic)
+│   ├── admin/              # Admin Dashboard Routes (Protected)
+│   ├── api/                # NextAuth API Routes
+│   ├── (storefront)/       # Public Routes (Cart, Checkout, Shop)
+│   └── page.tsx            # Home Page
+├── components/             # Reusable UI Components
+├── lib/                    # Utilities (Prisma Client, Formatters)
+├── prisma/                 # DB Schema & Seed Scripts
+└── public/                 # Static Assets
