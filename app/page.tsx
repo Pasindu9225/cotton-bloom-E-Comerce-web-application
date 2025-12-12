@@ -46,7 +46,7 @@ export default async function HomePage() {
             PURE COMFORT, <br /> NATURALLY.
           </h1>
           <p className="text-lg md:text-2xl text-gray-200 max-w-2xl drop-shadow-md">
-            Premium apparel crafted from 100% organic cotton. Experience the touch of true quality.
+            Premium apparel crafted for everyday luxury. Experience the touch of true quality.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
